@@ -39,8 +39,17 @@ initialCards.forEach(function(item) {
 
 // Слушатель клика на постоянных интерактивных элементах 
 clickable.forEach((elmnt) =>{
-    elmnt.selector.addEventListener('click', () => {
+    elmnt.selector.addEventListener('click', (evt) => {
         openPopup(elmnt.popupElement);
+        if (elmnt.popupElement.classList.contains('popup_type_edit')) {
+            const editForm = document.forms['edit-profile'];
+            
+            const nameInput = document.querySelector('.profile__title');
+            const jobInput = document.querySelector('.profile__description');
+
+            editForm.elements.name.value = nameInput.textContent;
+            editForm.elements.description.value = jobInput.textContent;
+        }
     });
 });
 
