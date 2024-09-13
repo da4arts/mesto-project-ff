@@ -25,6 +25,8 @@ const formNewCard = document.forms['new-place']; //форма
 
 // интерактивность карточек
 const popupImage = document.querySelector('.popup_type_image'); //попап
+const picturePopupImage = popupImage.querySelector('.popup__image');   
+const captionPopupImage = popupImage.querySelector('.popup__caption');  
 
 // массив постоянных интерактивных элементов
 const clickable = [
@@ -42,8 +44,9 @@ const handlersSubmit = [];
 // Функция увеличения изображения при нажатии
 function enhanceImageOnClick(evt) {
     if (evt.target.classList.contains('card__image')) {
-        popupImage.querySelector('.popup__image').src = evt.currentTarget.querySelector('.card__image').src;
-        popupImage.querySelector('.popup__caption').textContent = evt.currentTarget.querySelector('.card__title').textContent;
+        picturePopupImage.src = evt.currentTarget.querySelector('.card__image').src;
+        picturePopupImage.alt = evt.currentTarget.querySelector('.card__image').alt;
+        captionPopupImage.textContent = evt.currentTarget.querySelector('.card__title').textContent;
         openPopup(popupImage);
     }
   }
@@ -88,8 +91,7 @@ clickable.forEach((elmnt) =>{
     elmnt.selector.addEventListener('click', (evt) => {
         
         if (elmnt.popupElement.classList.contains('popup_type_edit')) {
-            const editForm = document.forms['edit-profile'];
-            
+                        
             const nameInput = document.querySelector('.profile__title');
             const jobInput = document.querySelector('.profile__description');
 
