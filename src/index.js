@@ -1,8 +1,7 @@
-import { initialCards } from './scripts/cards.js'
 import { createCard, removeCard, likeButtonToggle } from './scripts/card.js'
-import { openPopup, closePopup } from './scripts/modal.js';
+import { openPopup, closePopup, enableValidation } from './scripts/modal.js';
 import './pages/index.css'; 
-
+import * as api from './scripts/api.js';
 
 //-------------------
 //     КОНСТАНТЫ
@@ -15,8 +14,13 @@ const popupArray = document.querySelectorAll('.popup'); // массив всех
 const editButton = container.querySelector('.profile__edit-button'); // кнопка
 const nameInput = document.querySelector('.profile__title'); //строка с именем
 const jobInput = document.querySelector('.profile__description'); //строка с описанием
+const avatarProfile = document.querySelector('.profile__image');
+const buttonAvatarEdit = document.querySelector('.profile__image-hover');
+const popupAvatar = document.querySelector('.popup_type_new-avatar');
+const formAvatar = document.forms['new-avatar'];
 const popupEdit = document.querySelector('.popup_type_edit'); //попап
 const editForm = document.forms['edit-profile']; //форма
+
 
 // добавление новой карточки
 const buttonNewCard = container.querySelector('.profile__add-button'); //кнопка
@@ -31,15 +35,34 @@ const captionPopupImage = popupImage.querySelector('.popup__caption');
 // массив постоянных интерактивных элементов
 const clickable = [
     {selector: editButton, popupElement: popupEdit},
-    {selector: buttonNewCard, popupElement: popupNewCard}
+    {selector: buttonNewCard, popupElement: popupNewCard},
+    {selector: buttonAvatarEdit, popupElement: popupAvatar}
 ]; 
 
 //массив обработчиков кнокип "Сохранить"
 const handlersSubmit = [];
 
+// конфигурация валидации
+const configValidation = {
+    formSelector: '.popup__form',
+    inputSelector: '.popup__input',
+    submitButtonSelector: '.popup__button',
+    inactiveButtonClass: 'popup__button_disabled',
+    inputErrorClass: 'popup__input_type_error',
+    errorClass: 'popup__error_visible'
+  };
+
+// переменные API
+const serverLinkProfile = 'https://nomoreparties.co/v1/wff-cohort-23/users/me';
+const serverLinkCards = 'https://nomoreparties.co/v1/wff-cohort-23/cards';
+const serverLinkLikes = 'https://nomoreparties.co/v1/wff-cohort-23/cards/likes/';
+const serverLinkAvatar = 'https://nomoreparties.co/v1/wff-cohort-23/avatar';
+const serverToken = 'f67b98a7-6c15-45e9-9b9f-f262fc587873';
+
 //-------------------
 //     ФУНКЦИИ
 //-------------------
+
 
 // Функция увеличения изображения при нажатии
 function enhanceImageOnClick(evt) {
@@ -51,35 +74,112 @@ function enhanceImageOnClick(evt) {
     }
   }
 
+function renderSaving(form) {
+    const button = form.querySelector('.button__submit');
+    button.classList.toggle('saving');
+
+
+    if (button.classList.contains('saving')) {
+        button.textContent = 'Сохранение...';
+        button.classList.add('popup__button_disabled');
+    }
+    else {
+        button.textContent = 'Cохранить';
+        button.classList.remove('popup__button_disabled');
+    }
+}
+
+
 // Обработка нажатия "СОХРАНИТЬ".
-// для формы редактирования
+// для добавления новой карточки
 
 handlersSubmit.push({
     element: popupNewCard,
     handler: function handleNewCardFormSubmit(evt) {   
-        evt.preventDefault();         
+        evt.preventDefault(); 
+        renderSaving(formNewCard);   
         const cardNameInput = formNewCard.elements['place-name'].value;
         const cardLinkInput = formNewCard.elements['link'].value;
         const newCard = {
             name: cardNameInput,
-            link: cardLinkInput
+            link: cardLinkInput,
+            likes: 0
         };
-        cardContainer.prepend(createCard(newCard, removeCard, likeButtonToggle, enhanceImageOnClick));
-        closePopup(popupNewCard);
+
+        cardContainer.prepend(createCard(newCard,
+            removeCard, api.deleteImageFromServer,
+            likeButtonToggle, api.uploadLike, api.removeLike, false,
+            enhanceImageOnClick,
+            true
+        ));
+        api.loadImage(serverLinkCards, serverToken, newCard.name, newCard.link)
+        .then(()=> {
+            renderSaving(formNewCard); 
+            closePopup(popupNewCard);
+        })
     }
 });
 
-// для формы добавления новой карточки
+// для формы редактирования профиля
 
 handlersSubmit.push({
     element: popupEdit,
     handler: function handleEditFormSubmit(evt) {
         evt.preventDefault(); 
-        nameInput.textContent = editForm.elements.name.value;
-        jobInput.textContent = editForm.elements.description.value;
-        closePopup(popupEdit);
+        renderSaving(editForm);
+        
+        
+        
+        api.loadProfile(serverLinkProfile, serverToken, nameInput.textContent, jobInput.textContent)
+        .then(() => {
+            nameInput.textContent = editForm.elements.name.value;
+            jobInput.textContent = editForm.elements.description.value;
+            closePopup(popupEdit);
+            renderSaving(editForm);
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+
     }
 });
+
+// для обновления аватарки
+handlersSubmit.push({
+    element: popupAvatar,
+    handler: function handleAvatarFormSubmit(evt) {
+        evt.preventDefault(); 
+        renderSaving(formAvatar);
+        const cardLinkInput = formAvatar.elements['avatar-link'].value;
+
+        function loadImage() {
+            return new Promise((resolve, reject) => {
+                const image = new Image();
+                image.addEventListener('load', resolve);
+                image.addEventListener('error', reject);
+                image.src = cardLinkInput;
+            });
+        };
+
+        loadImage()
+        .then(api.uploadAvatar(cardLinkInput))
+        .then(() => {
+            avatarProfile.style.backgroundImage = `url(${cardLinkInput})`;
+            renderSaving(formAvatar);
+            closePopup(popupAvatar);
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+
+       
+    }
+});
+
+
+// Удаление карточки
+
+
 
 // ----------------------
 //      СЛУШАТЕЛИ
@@ -112,6 +212,9 @@ popupArray.forEach((element) => {
     });
 });
 
+
+
+
 // ---------------------------
 //    ЗАГРУЗКА СТРАНИЦЫ
 // ---------------------------
@@ -119,9 +222,15 @@ popupArray.forEach((element) => {
 // каждой форме с кнопкой сохранить насраиваем соответсвующий слушатель.
 
 handlersSubmit.forEach((item)=>{item.element.addEventListener('submit', item.handler)});
+enableValidation(configValidation);
 
-// Стартовое заполнение стола
-
-initialCards.forEach(function(item) {
-    cardContainer.append(createCard(item, removeCard, likeButtonToggle, enhanceImageOnClick));
+// Загрузка данных с сервера
+api.downloadProfile(serverLinkProfile, serverToken)
+.then(api.downloadCards(serverLinkCards, serverToken, enhanceImageOnClick))
+.then (()=> {
+    console.log('Startup download from server has been finished.');
+})
+.catch((error) => {
+    console.error(error);
 });
+

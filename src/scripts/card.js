@@ -1,21 +1,40 @@
-
-
-
-
-
 // Создаем карточку.
 
-function createCard(card, remove_callback, like_callback, imageClickCallback) {
+function createCard(card, remove_callback,  deleteFromServer, like_callback, uploadLike, removeLike, isLike,
+  imageClickCallback, optionDeleteButton) {
     const cardTemplate = document.querySelector('#card-template').content;
     const cardElement = cardTemplate.querySelector('.card').cloneNode(true);
-    cardElement.querySelector('.card__image').src = card.link;
-    cardElement.querySelector('.card__image').alt = "пейзаж из " + card.name;
+    const cardImage = cardElement.querySelector('.card__image');
+    
+    cardElement.id = card["_id"];
+    cardImage.src = card.link;
+    cardImage.alt = "пейзаж из " + card.name;
     cardElement.querySelector('.card__title').textContent = card.name;
+    cardElement.querySelector('.card__likes-counter').textContent = card.likes.length;    
+    
+    if (isLike) {
+      cardElement.querySelector('.card__like-button').classList.add('card__like-button_is-active');
+    }
 
-    cardElement.querySelector('.card__delete-button').addEventListener('click', remove_callback);
-    cardElement.addEventListener('click', like_callback);
+    if (optionDeleteButton) {
+      cardElement.querySelector('.card__delete-button').style.visibility = "visible";
+    };
 
-    cardElement.addEventListener('click', imageClickCallback);
+    cardElement.addEventListener('click', (evt) => {
+      if (evt.target.classList.contains('card__like-button')) {
+        if (evt.target.classList.contains('card__like-button_is-active')) {
+          removeLike(evt.currentTarget, '.card__likes-counter');
+        } else {
+          uploadLike(evt.currentTarget,'.card__likes-counter' );
+        };
+        like_callback(evt);
+      } else if (evt.target.classList.contains('card__delete-button')) {
+        deleteFromServer(evt.currentTarget.id);
+        remove_callback(evt);
+      } else if (evt.target.classList.contains('card__image')) {
+        imageClickCallback(evt);
+      };
+    });
 
     return cardElement;
 }

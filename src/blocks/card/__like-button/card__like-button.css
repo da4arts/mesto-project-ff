@@ -1,3 +1,11 @@
+.card__likes {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
 .card__like-button {
   width: 21px;
   height: 18px;
@@ -13,6 +21,13 @@
   -ms-transition: 0.3s;
   -o-transition: 0.3s;
   transition: 0.3s;
+}
+
+.card__likes-counter {
+  display: inline-block;
+  font-size: 13px;
+  padding: 0;
+  margin: 0;
 }
 
 .card__like-button:hover {
