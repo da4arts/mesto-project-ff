@@ -1,7 +1,18 @@
 let configValidation;
+
 //------------------------
 // ВАЛИДАЦИЯ ФОРМ ПОПАПОВ
 //------------------------
+function deactivateButton(buttonElement) {
+    buttonElement.disabled = true;
+    buttonElement.classList.add(configValidation.inactiveButtonClass);
+};
+
+function activateButton(buttonElement) {
+    buttonElement.disabled = false;
+    buttonElement.classList.remove(configValidation.inactiveButtonClass);
+};
+
 // Функция, которая добавляет класс с ошибкой
 const showInputError = (formElement, inputElement, errorMessage) => {
     // Находим элемент ошибки внутри самой функции
@@ -45,12 +56,10 @@ const toggleButtonState = (inputList, buttonElement) => {
     // Если есть хотя бы один невалидный инпут
     if (hasInvalidInput(inputList)) {
         // сделай кнопку неактивной
-        buttonElement.disabled = true;
-        buttonElement.classList.add(configValidation.inactiveButtonClass);
+        deactivateButton(buttonElement);
     } else {
         // иначе сделай кнопку активной
-        buttonElement.disabled = false;
-        buttonElement.classList.remove(configValidation.inactiveButtonClass);
+        activateButton(buttonElement);
     }
 }; 
 
@@ -89,8 +98,7 @@ const enableValidation = (config) => {
     });
 };
 
-const clearValidation = function (element) {
-    const formElement = element.querySelector(configValidation.formSelector);
+const clearValidation = (formElement) => {
     if (formElement === null) {return};
     const arrayErrorInputs = Array.from(formElement.querySelectorAll(configValidation.errorClass));
     const buttonElement = formElement.querySelector(configValidation.submitButtonSelector);
@@ -103,10 +111,10 @@ const clearValidation = function (element) {
 
     // зачистка полей формы
     arrayInputs.forEach((inputElement) => {
-        formElement.elements[inputElement.getAttribute('name')].value = '';
+        inputElement.value = '';
     });
 
-    buttonElement.classList.remove(configValidation.inputErrorClass.inactiveButtonClass);
+    deactivateButton(buttonElement);
 };
 
 export{enableValidation, clearValidation}

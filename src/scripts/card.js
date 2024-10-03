@@ -1,7 +1,7 @@
 // Создаем карточку.
 
-function createCard(card, remove_callback,  deleteFromServer, like_callback, uploadLike, removeLike, isLike,
-  imageClickCallback, optionDeleteButton) {
+function createCard(card, deleteCard, toggleCardButtonLike, 
+  callbackCardImage, profileID) {
     const cardTemplate = document.querySelector('#card-template').content;
     const cardElement = cardTemplate.querySelector('.card').cloneNode(true);
     const cardImage = cardElement.querySelector('.card__image');
@@ -12,27 +12,28 @@ function createCard(card, remove_callback,  deleteFromServer, like_callback, upl
     cardElement.querySelector('.card__title').textContent = card.name;
     cardElement.querySelector('.card__likes-counter').textContent = card.likes.length;    
     
-    if (isLike) {
-      cardElement.querySelector('.card__like-button').classList.add('card__like-button_is-active');
-    }
-
-    if (optionDeleteButton) {
+    // проверка, создана ли карточка текущим пользователем.
+    // в позитивном случае, проверяем лайкал ли пользователь карточку раньше.
+    const propertyOwn = (card.owner["_id"] === profileID);
+    if (propertyOwn) {
       cardElement.querySelector('.card__delete-button').style.visibility = "visible";
+      const isLike = card.likes.some((item) => {
+        return (item['_id'] === profileID);
+      });
+      
+      if (isLike) {
+        cardElement.querySelector('.card__like-button').classList.add('card__like-button_is-active');
+      }
+    
     };
 
     cardElement.addEventListener('click', (evt) => {
       if (evt.target.classList.contains('card__like-button')) {
-        if (evt.target.classList.contains('card__like-button_is-active')) {
-          removeLike(evt.currentTarget, '.card__likes-counter');
-        } else {
-          uploadLike(evt.currentTarget,'.card__likes-counter' );
-        };
-        like_callback(evt);
-      } else if (evt.target.classList.contains('card__delete-button')) {
-        deleteFromServer(evt.currentTarget.id);
-        remove_callback(evt);
+        toggleCardButtonLike(evt.currentTarget);
+      } else if (evt.target.classList.contains('card__delete-button') && propertyOwn) {
+        deleteCard(evt.currentTarget);
       } else if (evt.target.classList.contains('card__image')) {
-        imageClickCallback(evt);
+        callbackCardImage(evt);
       };
     });
 
@@ -42,19 +43,18 @@ function createCard(card, remove_callback,  deleteFromServer, like_callback, upl
 
 // Функция удаления карточки
 
-function removeCard(event) {
-  const eventTarget = event.target;
-  eventTarget.closest('.card').remove();
+function removeCard(cardElement) {
+  cardElement.remove();
 };
 
 
 //Обработчик нажатия на лайк
-function likeButtonToggle(evt) {
-  if (evt.target.classList.contains('card__like-button')) {
-    evt.target.classList.toggle('card__like-button_is-active');
+function toggleLike(button) {
+  if (button.classList.contains('card__like-button')) {
+    button.classList.toggle('card__like-button_is-active');
   }
 }
 
 
 
-export {createCard, removeCard, likeButtonToggle };
+export {createCard, removeCard, toggleLike };

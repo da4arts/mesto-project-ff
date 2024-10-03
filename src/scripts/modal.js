@@ -1,23 +1,21 @@
-import { enableValidation, clearValidation } from "./validation.js";
-
 //-------------------------------
 // ОТКРЫТИЕ И ЗАКРЫТИЕ ПОПАПОВ
 //-------------------------------
-function closePopup(element) {
+function hidePopup(element) {
     element.classList.remove('popup_is-opened');
-    document.removeEventListener('keydown', escToClose);
-    clearValidation(element);
+    document.removeEventListener('keydown', closeOnEsc);
 };
 
-function openPopup(element) {
+function showPopup(element) {
     element.classList.add('popup_is-opened');
-    document.addEventListener('keydown', escToClose);
+    document.addEventListener('keydown', closeOnEsc);
 };
 
-function escToClose(evt) {
+//  callback закрытия при нажатии на esc
+function closeOnEsc(evt) {
     if (evt.key === 'Escape') {
-        closePopup(document.querySelector('.popup_is-opened'));
+        hidePopup(document.querySelector('.popup_is-opened'));
     };
 };
   
-export {openPopup, closePopup, enableValidation};
+export {hidePopup, showPopup};
