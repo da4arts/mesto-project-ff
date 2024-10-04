@@ -9,7 +9,7 @@ const serverToken = 'f67b98a7-6c15-45e9-9b9f-f262fc587873';
 
 function handleResponse(res) {
     if (res.ok) {
-        return(res.json());
+        return Promise.resolve(res.json());
     } else {
         return Promise.reject(res.status);
     };
@@ -22,7 +22,7 @@ function handleResponse(res) {
 //-------------------
 // CARDS
 //загрузка карточек
-export function downloadCards(createLocalCard) {
+export function downloadCards() {
     return fetch(serverLinkCards, {
         headers: {
             authorization: serverToken
@@ -30,17 +30,11 @@ export function downloadCards(createLocalCard) {
     })
     .then((res) => {
         return handleResponse(res);
-    }) 
-    .then((res) => {
-        return Promise.all(res.map((card) => {
-                return createLocalCard(card);
-            })
-        );
     });
 };
 
 // загрузка на сервер новой карточки
-export function generateCard(imageName, imageLink, generateLocalCard) {
+export function generateCard(imageName, imageLink) {
     return fetch(serverLinkCards, {
         method: 'POST',
         headers: {
@@ -54,30 +48,24 @@ export function generateCard(imageName, imageLink, generateLocalCard) {
     })
     .then((res) => {
         return handleResponse(res);
-    }) 
-    .then((result) => {
-        generateLocalCard(result);
     });
 };
 
 // удаление карточки с сервера
-export function deleteImageFromServer(cardElement, removeCard) {
+export function deleteImageFromServer(cardElement) {
     return fetch(serverLinkCards + '/'+ cardElement.id, {
         method: 'DELETE',
         headers: {authorization: serverToken}
     })
     .then((res) => {
         return handleResponse(res);
-    })
-    .then((res) => {
-        removeCard(cardElement);
     });
 };
 
 //-------------------
 // PROFILE
 // Загрузка профиля с сервера
-export function downloadProfile (syncLocalProfile) {
+export function downloadProfile () {
         return fetch(serverLinkProfile, {
             headers: {
                 authorization: serverToken
@@ -85,14 +73,11 @@ export function downloadProfile (syncLocalProfile) {
         })
         .then((res) => {
             return handleResponse(res);
-        }) 
-        .then((res) => {
-            syncLocalProfile(res);
         });
 };
 
 // загрузка на сервер нового профиля
-export function updateProfile(newName, newDescription, syncLocalProfile) {
+export function updateProfile(newName, newDescription) {
     return fetch(serverLinkProfile, {
             method: 'PATCH',
             headers: {
@@ -106,16 +91,12 @@ export function updateProfile(newName, newDescription, syncLocalProfile) {
     })
     .then((res) => {
         return handleResponse(res);
-    }) 
-    .then((res) => {
-        console.log(res);
-        syncLocalProfile(res);
     });
 
 };
 
 // изменение аватара
-export function uploadAvatar(avatarLink, syncLocalProfile) {
+export function uploadAvatar(avatarLink) {
     return fetch(serverLinkAvatar, {
         method: 'PATCH',
         headers: {
@@ -128,15 +109,12 @@ export function uploadAvatar(avatarLink, syncLocalProfile) {
     })
     .then((res) => {
         return handleResponse(res);
-    }) 
-    .then((result) => {
-        syncLocalProfile(result);
     });
 };
 //-------------------
 // LIKES
 // добавление лайка на сервер
-export function uploadLike(cardElement, updateLikesCounter) {
+export function uploadLike(cardElement) {
   
     return fetch(serverLinkLikes + '/'+ cardElement.id, {
         method: 'PUT',
@@ -144,23 +122,17 @@ export function uploadLike(cardElement, updateLikesCounter) {
     })
     .then((res) => {
         return handleResponse(res);
-    }) 
-    .then((result) => {
-        updateLikesCounter(cardElement, result);
     });
 };
 
 // удаление лайка с сервера
-export function removeLike(cardElement, updateLikesCounter) {
+export function removeLike(cardElement) {
     return fetch(serverLinkLikes + '/'+ cardElement.id, {
         method: 'DELETE',
         headers: {authorization: serverToken}
     })
     .then((res) => {
         return handleResponse(res);
-    }) 
-    .then((result) => {
-        updateLikesCounter(cardElement, result);
     });
 };
 

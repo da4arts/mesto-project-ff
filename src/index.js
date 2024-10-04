@@ -114,7 +114,10 @@ function generateLocalCard(result) {
 
 //удаление карточки из БД,а затем локальное
 function deleteCard(cardElement) {
-    api.deleteImageFromServer(cardElement, removeCard)
+    api.deleteImageFromServer(cardElement)
+    .then((res) => {
+        removeCard(res);
+    })
     .catch((error)=>{
         console.log(error);
     });
@@ -146,15 +149,18 @@ function syncLocalProfile(result) {
 function toggleCardButtonLike(cardElement) {
     const buttonLike = cardElement.querySelector('.card__like-button');
     if (buttonLike.classList.contains('card__like-button_is-active')) {
-        api.removeLike(cardElement, updateLikesCounter)
-        .then(() => {
+        api.removeLike(cardElement)
+        .then((res) => {
+            updateLikesCounter(cardElement, res);
             toggleLike(buttonLike);
-        }).catch((error) => {
+        })
+        .catch((error) => {
             console.log(error);
         });
     } else {
-        api.uploadLike(cardElement, updateLikesCounter)
-        .then(() => {
+        api.uploadLike(cardElement)
+        .then((res) => {
+            updateLikesCounter(cardElement, res);
             toggleLike(buttonLike);
         })
         .catch((error) => {
@@ -182,7 +188,10 @@ handlersSubmit.push({
         const cardNameInput = formNewCard.elements['place-name'].value;
         const cardLinkInput = formNewCard.elements['link'].value;
 
-        api.generateCard(cardNameInput, cardLinkInput, generateLocalCard)
+        api.generateCard(cardNameInput, cardLinkInput)
+        .then((res) => {
+            generateLocalCard(res);
+        })
         .catch((error) => {
             console.log(error);
         })
@@ -203,9 +212,10 @@ handlersSubmit.push({
         const name = editForm.elements['name'].value;
         const description = editForm.elements['description'].value;
 
-        api.updateProfile(name, description,
-            syncLocalProfile
-        ) 
+        api.updateProfile(name, description)
+        .then((profile) => {
+            syncLocalProfile(profile);
+        })
         .catch((error) => {
             console.log(error);
         })
@@ -227,7 +237,10 @@ handlersSubmit.push({
 
         checkImageLink(linkAvatar)
         .then(() => {
-            api.uploadAvatar(linkAvatar, syncLocalProfile);
+            return api.uploadAvatar(linkAvatar)
+        })
+        .then((res) => {
+            syncLocalProfile(res);
         })
         .catch((err) => {
             console.log(err);
@@ -298,12 +311,15 @@ handlersSubmit.forEach((item)=>{item.element.addEventListener('submit', item.han
 enableValidation(configValidation);
 
 // Загрузка данных с сервера
-api.downloadProfile(syncLocalProfile)
-.then(() => {
-    api.downloadCards(createLocalCardOnStart)
+Promise.all([api.downloadProfile(), api.downloadCards()])
+.then(([profileData, cardsData]) => {
+    syncLocalProfile(profileData);
+    return Promise.all(cardsData.map((card) => {
+        return createLocalCardOnStart(card);
+        })
+    );
 })
 .catch((error) => {
     console.log(error);
 });
-
 
